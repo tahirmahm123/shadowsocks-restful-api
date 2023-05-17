@@ -4,7 +4,7 @@ const express = require("express");
 const fs = require("fs");
 const https = require("https");
 const bodyParser = require("body-parser");
-const { check, validationResult } = require("express-validator");
+const expressValidator = require("express-validator");
 const crypto = require("crypto");
 const passport = require("passport");
 const passportJWT = require("passport-jwt");
@@ -54,7 +54,6 @@ const httpsServer = https.createServer(credentials, app);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(check());
 app.use(expressValidator());
 
 const routes = require("./routes");
