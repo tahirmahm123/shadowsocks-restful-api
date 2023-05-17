@@ -180,7 +180,7 @@ const login = async function (e) {
 		throw new Error("illegal argument");
 	}
 
-	if (e !== Y) {
+	if (e !== loginPassword) {
 		throw new Error("invalid password");
 	}
 };
