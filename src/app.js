@@ -6,10 +6,6 @@ const https = require("https");
 const bodyParser = require("body-parser");
 const expressValidator = require("express-validator");
 const crypto = require("crypto");
-const passport = require("passport");
-const passportJWT = require("passport-jwt");
-const JWTStrategy = passportJWT.Strategy;
-const ExtractJWT = passportJWT.ExtractJwt;
 
 const LOGIN_PASSWORD = process.env.LOGIN_PASSWORD;
 const secretKey = crypto
@@ -24,16 +20,6 @@ let listenPort =
 		? process.env.LISTEN_PORT
 		: 4001;
 
-const jwtOptions = {
-	jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
-	secretOrKey: secretKey,
-};
-
-passport.use(
-	new JWTStrategy(jwtOptions, (error, user) => {
-		return user(null, { id: 1 });
-	})
-);
 
 let serverKey, serverCert;
 try {
@@ -58,23 +44,11 @@ app.use(expressValidator());
 
 const routes = require("./routes");
 app.post("/login", routes.login);
-app.post("/", passport.authenticate("jwt", { session: false }), routes.addPort);
-app.delete(
-	"/",
-	passport.authenticate("jwt", { session: false }),
-	routes.removePort
-);
-app.get(
-	"/all",
-	passport.authenticate("jwt", { session: false }),
-	routes.getAllPorts
-);
-app.get(
-	"/traffic/all",
-	passport.authenticate("jwt", { session: false }),
-	routes.getAllTraffic
-);
-app.get("/ping", passport.authenticate("jwt", { session: false }), routes.ping);
+app.post("/", routes.addPort);
+app.delete("/", routes.removePort);
+app.get("/all",routes.getAllPorts);
+app.get("/traffic/all",routes.getAllTraffic);
+app.get("/ping", routes.ping);
 
 httpsServer
 	.listen(listenPort, () => {

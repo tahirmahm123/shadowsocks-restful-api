@@ -1,3 +1,4 @@
+const { sendCommand } = require("./sock")
 const ProtocolTypes = {
     type: null,
     getType: async () => {
@@ -18,6 +19,30 @@ const ProtocolTypes = {
         } else {
             throw new Error("ShadowsocksType.getType, received unknown message" );
         }
+    }
+}
+
+const $ = {
+    commandKeywords: {
+        libev: {
+            ping: "ping",
+            getAllPorts: "list",
+            getAllTraffic: "ping",
+            add: "add",
+            remove: "remove"
+        },
+        python: {
+            ping: "ping",
+            getAllPorts: "",
+            getAllTraffic: "",
+            add: "add",
+            remove: "remove"
+        }
+    },
+    getCommandKeyword: function(e, r) {
+        if ("libev" !== e && "python" !== e) throw new Error("illegal argument");
+        if ("ping" !== r && "getAllPorts" !== r && "getAllTraffic" !== r && "add" !== r && "remove" !== r) throw new Error("illegal argument");
+        return this.commandKeywords[e][r];
     }
 }
 module.exports = {
@@ -41,5 +66,6 @@ module.exports = {
         "chacha20",
         "chacha20-ietf",
     ],
-    ProtocolTypes
+    ProtocolTypes,
+    $
 };

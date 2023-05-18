@@ -1,124 +1,9 @@
-"use strict";
-
-const regeneratorRuntime = require("regenerator-runtime");
-const unixDgram = require("unix-dgram");
 const fs = require("fs");
-const path = require("path");
-const asyncLock = require("async-lock");
 const validator = require("validator");
 const debug = require("debug")("service");
-const portastic = require("portastic");
 const Ports = require("./ports");
-const { ProtocolTypes, encryptionMethods } = require("./constants");
-
-const socketPath = path.resolve(__dirname, "/tmp/shadowsocks-manager.sock");
-const controllerPath = path.resolve(__dirname, "/tmp/ss-controller.sock");
-const loginPassword = process.env.LOGIN_PASSWORD;
-
-const socket = unixDgram.createSocket("unix_dgram");
-const lock = new asyncLock();
-const commandKeywords = {
-	libev: {
-		ping: "ping",
-		getAllPorts: "list",
-		getAllTraffic: "ping",
-		add: "add",
-		remove: "remove",
-	},
-	python: {
-		ping: "ping",
-		getAllPorts: "",
-		getAllTraffic: "",
-		add: "add",
-		remove: "remove",
-	},
-};
-
-function sendCommand(command) {
-	if (!command || typeof command !== "string") {
-		throw new Error("Illegal argument");
-	}
-
-	if (
-		command !== "ping" &&
-		command !== "list" &&
-		command.substr(0, 5) !== "add: " &&
-		command.substr(0, 8) !== "remove: "
-	) {
-		throw new Error("Illegal argument");
-	}
-
-	if (command.substr(0, 5) === "add: ") {
-		const jsonString = command.substr(5);
-		if (!isValidJSON(jsonString)) {
-			throw new Error("Illegal argument");
-		}
-
-		const { server_port, password } = JSON.parse(jsonString);
-		if (
-			!Number.isInteger(server_port) ||
-			server_port < 1 ||
-			server_port > 65535 ||
-			typeof password !== "string" ||
-			password.length < 1
-		) {
-			throw new Error("Illegal argument");
-		}
-	}
-
-	if (command.substr(0, 8) === "remove: ") {
-		const jsonString = command.substr(8);
-		if (!isValidJSON(jsonString)) {
-			throw new Error("Illegal argument");
-		}
-
-		const { server_port } = JSON.parse(jsonString);
-		if (
-			!Number.isInteger(server_port) ||
-			server_port < 1 ||
-			server_port > 65535
-		) {
-			throw new Error("Illegal argument");
-		}
-	}
-
-	return lock.acquire("key", () => {
-			return new Promise((resolve, reject) => {
-				let hasResponse = false;
-				socket.once("message", (message) => {
-					hasResponse = true;
-					resolve(String(message));
-				});
-
-				try {
-					const buffer = Buffer.from(command);
-					socket.send(
-						buffer,
-						0,
-						buffer.length,
-						socketPath,
-						(error) => {
-							if (error) {
-								throw new Error("Shadowsocks unreachable");
-							}
-						}
-					);
-				} catch (error) {
-					socket.removeAllListeners("message");
-					throw error;
-				}
-
-				setTimeout(() => {
-					if (!hasResponse) {
-						socket.removeAllListeners("message");
-						reject(new Error("Shadowsocks no response"));
-					}
-				}, 1000);
-			});
-		},
-		{}
-	);
-}
+const { $, ProtocolTypes, encryptionMethods } = require("./constants");
+const { sendCommand, socket, controllerPath, getPortAvailable } = require("./sock")
 
 async function initialize() {
 	try {
@@ -137,14 +22,6 @@ async function initialize() {
 	}
 }
 
-function isValidJSON(jsonString) {
-	try {
-		JSON.parse(jsonString);
-		return true;
-	} catch (error) {
-		return false;
-	}
-}
 
 const updatePorts = async function () {
 	try {
@@ -249,7 +126,7 @@ const addSockPort = async function (e) {
 		throw new Error("port already exists from shadowsocks");
 	}
 
-	const portAvailable = await L(port);
+	const portAvailable = await getPortAvailable(port);
 	if (!portAvailable) {
 		throw new Error("port not available from operating system");
 	}
@@ -339,7 +216,7 @@ const removePort = async function (r) {
 		throw new Error("shadowsocks failed removing port");
 	}
 
-	const portAvailable = await L(r);
+	const portAvailable = await getPortAvailable(r);
 	if (!portAvailable) {
 		throw new Error("operating system failed removing port");
 	}
@@ -375,7 +252,7 @@ const getAllPortsFromLibev = async function () {
 	const result = await sendCommand(libevGetAllPortsCommand);
 
 	let ports = [];
-	if (result.substr(0, 3) === "[\n\t") {
+	if (result.substr(0, 2) === "[\n") {
 		const data = JSON.parse(result);
 		ports = data.map((e) => ({
 			port: Number(e.server_port),
@@ -492,15 +369,6 @@ const isPortUsed = async function (r) {
 	return n.includes(r);
 };
 
-const L = async function (r) {
-	if (isNaN(r) || !Number.isInteger(r) || r < 1 || r > 65535) {
-		throw new Error("illegal argument");
-	}
-
-	const t = await Q.test(r);
-	return t;
-};
-
 const sendRemoveFromLibev = async function (r) {
 	if (isNaN(r) || !Number.isInteger(r) || r < 1 || r > 65535) {
 		throw new Error("illegal argument");
@@ -553,6 +421,9 @@ const sendRemoveFromPython = async function (r) {
 
 
 // Bind event listeners
+if (fs.existsSync(controllerPath)) {
+	fs.unlinkSync(controllerPath)
+}
 socket.bind(controllerPath);
 socket.on("error", (error) => {
 	throw new Error("Client on error, shadowsocks error: " + error);

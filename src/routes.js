@@ -27,7 +27,7 @@ async function login(req, res) {
 		if (error.message === "invalid password") {
 			return res.status(401).end();
 		}
-		return res.status(500).send({ error: error });
+		return res.status(500).send({ error: JSON.stringify(error) });
 	}
 }
 
@@ -72,7 +72,7 @@ async function addPort(req, res) {
 			return res.status(425).end();
 		}
 
-		return res.status(500).send({ error: error });
+		return res.status(500).send({ error: error.message });
 	}
 }
 
@@ -87,7 +87,7 @@ async function getAllPorts(req, res) {
 			return res.status(425).end();
 		}
 
-		return res.status(500).send({ error: error });
+		return res.status(500).send({ error: JSON.stringify(error) });
 	}
 }
 
@@ -102,23 +102,24 @@ async function getAllTraffic(req, res) {
 			return res.status(425).end();
 		}
 
-		return res.status(500).send({ error: error });
+		return res.status(500).send({ error: JSON.stringify(error) });
 	}
 }
 
 
 async function ping(req, res) {
+	res.send("Hello")
 	try {
 		const result = await socketController.ping();
 		return res.status(200).send(result);
 	} catch (error) {
 		if (error.message === "shadowsocks unreachable") {
-			return res.status(424).end();
+			return res.status(424).send(error.message);
 		} else if (error.message === "shadowsocks no response") {
-			return res.status(425).end();
+			return res.status(425).send(error.message);
 		}
 
-		return res.status(500).send({ error: error });
+		return res.status(500).send({ error: JSON.stringify(error) });
 	}
 }
 
@@ -151,7 +152,7 @@ async function removePort(req, res) {
 			return res.status(425).end();
 		}
 
-		return res.status(500).send({ error: error });
+		return res.status(500).send({ error: JSON.stringify(error) });
 	}
 }
 
