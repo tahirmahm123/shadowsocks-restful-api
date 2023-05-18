@@ -1,0 +1,1 @@
+curl -k -w "%{http_code}" -H "Content-Type: application/json" -X POST -d '{"port": 40000,"password":"11223344","method":"aes-256-cfb"}' https://localhost:4001/
