@@ -52,16 +52,6 @@ const updatePorts = async function () {
 	}
 };
 
-const login = async function (e) {
-	if (!e) {
-		throw new Error("illegal argument");
-	}
-
-	if (e !== loginPassword) {
-		throw new Error("invalid password");
-	}
-};
-
 const addPort = async function (e) {
 	if (!e) {
 		throw new Error("illegal argument");
@@ -431,10 +421,9 @@ socket.on("error", (error) => {
 
 // Start initialization process
 initialize();
-setInterval(initialize, 3000);
+// setInterval(initialize, 3000);
 
 module.exports = {
-    login: login, 
     addPort: addPort, 
     getAllPorts: getSockPorts, 
     getAllTraffic: getAllTraffic, 
