@@ -420,7 +420,7 @@ socket.on("error", (error) => {
 });
 
 // Start initialization process
-initialize();
+// initialize();
 // setInterval(initialize, 3000);
 
 module.exports = {

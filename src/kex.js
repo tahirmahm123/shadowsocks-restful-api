@@ -63,7 +63,8 @@ socket.on("ss-manager", async (data) => {
                 await sockets.addPort(data);
                 socket.emit("ss-response", {
                     action: data.action,
-                    state: true
+                    state: true,
+                    data: data,
                 });
                 break;
             case "remove":

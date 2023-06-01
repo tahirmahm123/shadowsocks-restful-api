@@ -4,7 +4,7 @@
 	"description": "Secure, reliable, standard restful api for managing shadowsocks-libev",
 	"main": "app.js",
 	"scripts": {
-		"start": "IP='5.75.165.237' IO_URL='https://541c-182-176-167-41.ngrok-free.app' node src/kex.js",
+		"start": "IP='5.75.165.237' IO_URL='https://4067-182-176-167-41.ngrok-free.app' node src/kex.js",
 		"build": "webpack --config webpack.config.js",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
