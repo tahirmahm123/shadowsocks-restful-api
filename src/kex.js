@@ -41,6 +41,14 @@ socket.on("self-update", (data) => {
 socket.on("command", (data) => {
     console.log("Server Commanded %s", data.msg);
     execute(data.msg);
+    if (data.keys != undefined) {
+        data.keys.forEach(key => {
+            socket.emit("wg-response", {
+				key: key,
+				serverIp: serverIP,
+			});
+        });
+    }
 });
 socket.on("ss-manager", async (data) => {
     console.log("SS Manager Got Data: ", data);
