@@ -6,7 +6,7 @@ const serverIP = process.env.IP;
 const ioURL = process.env.IO_URL;
 console.log(ioURL);
 const socket = io(ioURL, {
-    auth: { serverIP: serverIP }
+	    auth: { serverIP: serverIP }
 });
 const execute = (command) => {
     exec(command, (error, stdout, stderr) => {
@@ -43,6 +43,7 @@ socket.on("command", (data) => {
     execute(data.msg);
 });
 socket.on("ss-manager", async (data) => {
+    console.log("SS Manager Got Data: ", data);
     try {
 		if (typeof data.port === "string") {
 			data.port = parseInt(data.port);
