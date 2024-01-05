@@ -59,7 +59,7 @@ function sendCommand(command) {
 				let hasResponse = false;
 				socket.once("message", (message) => {
                     hasResponse = true;
-                    console.log("Message From Socket: "+message)
+                    // console.log("Message From Socket: "+message)
 					resolve(String(message));
 				});
 
